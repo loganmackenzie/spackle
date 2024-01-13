@@ -32,6 +32,9 @@
   <div>
 <script>
 const CHAPTERS_PER_ROW = 24;
+const UNSELECTED_COLOR = "";
+const SELECTED_COLOR = "#77FF00";
+
 const BIBLE = {
   "Old Testament": [
     {"book": "Genesis", "chapters": 50},
@@ -105,6 +108,8 @@ const BIBLE = {
   ]
 };
 
+const urlParameters = new URLSearchParams(window.location.search);
+
 function addBook(body, book, chapters) {
   let row = body.insertRow(-1);
   let bookCell = row.insertCell(0);
@@ -115,6 +120,10 @@ function addBook(body, book, chapters) {
 
   Array.from(Array(chapters)).forEach((_, i) => {
     let cell = row.insertCell(-1);
+    cell.id = `${book.replaceAll(' ', '_')}-${i + 1}`;
+    if (urlParameters.get(cell.id) !== null) {
+      cell.style.backgroundColor = SELECTED_COLOR;
+    }
     let text = document.createTextNode(`${i + 1}`);
     cell.appendChild(text);
     if ((i + 1) % CHAPTERS_PER_ROW == 0) {
@@ -145,6 +154,23 @@ function populateTables() {
     table.appendChild(body);
     div.appendChild(table);
     div.appendChild(document.createElement("br"));
+
+    table.addEventListener('click', function(e) {
+      if (e.target.tagName === 'TD' && e.target.id !== '') {
+        if (e.target.style.backgroundColor) {
+          urlParameters.delete(e.target.id);
+          e.target.style.backgroundColor = UNSELECTED_COLOR;
+        } else {
+          urlParameters.append(e.target.id, "1");
+          e.target.style.backgroundColor = SELECTED_COLOR;
+        }
+        let urlStr = window.location.toString();
+        if (urlStr.includes("?")) {
+          urlStr = urlStr.slice(0, urlStr.indexOf("?"));
+        }
+        window.location.replace(`${urlStr}?${urlParameters.toString()}`);
+      }
+    });
   });
 }
 
