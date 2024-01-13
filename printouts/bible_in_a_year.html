@@ -111,21 +111,29 @@ const BIBLE = {
 const urlParameters = new URLSearchParams(window.location.search);
 
 function addBook(body, book, chapters) {
+  // Insert a new row into the table
   let row = body.insertRow(-1);
+  // Insert the book name cell, fix the width, rowSpan, and set the color.
   let bookCell = row.insertCell(0);
+  bookCell.id = book.replaceAll(" ", "_");
   bookCell.width = "150px";
   bookCell.rowSpan = Math.ceil(chapters / CHAPTERS_PER_ROW);
+  if (urlParameters.get(bookCell.id) !== null) {
+    bookCell.style.backgroundColor = SELECTED_COLOR;
+  }
   let bookText = document.createTextNode(book);
   bookCell.appendChild(bookText);
 
   Array.from(Array(chapters)).forEach((_, i) => {
+    // Insert a cell for the chapter and set the color.
     let cell = row.insertCell(-1);
-    cell.id = `${book.replaceAll(' ', '_')}-${i + 1}`;
-    if (urlParameters.get(cell.id) !== null) {
+    cell.id = `${bookCell.id}-${i + 1}`;
+    if (urlParameters.get(bookCell.id) !== null || urlParameters.get(cell.id) !== null) {
       cell.style.backgroundColor = SELECTED_COLOR;
     }
     let text = document.createTextNode(`${i + 1}`);
     cell.appendChild(text);
+    // Wrap the chapters around into the next row if needed.
     if ((i + 1) % CHAPTERS_PER_ROW == 0) {
       row = body.insertRow(-1);
     }
@@ -136,6 +144,7 @@ function populateTables() {
   const div = document.getElementById("content");
 
   Object.entries(BIBLE).forEach(testament => {
+    // Create the table and header
     const table = document.createElement("table");
     const head = document.createElement("thead");
     const th = document.createElement("th");
@@ -147,23 +156,44 @@ function populateTables() {
     head.appendChild(th);
     table.appendChild(head);
 
+    // Create the table body and add all the books.
     const body = document.createElement("tbody");
     testament[1].forEach(book => {
       addBook(body, book.book, book.chapters);
     });
     table.appendChild(body);
     div.appendChild(table);
+    // Add a break after the table
     div.appendChild(document.createElement("br"));
 
-    table.addEventListener('click', function(e) {
-      if (e.target.tagName === 'TD' && e.target.id !== '') {
-        if (e.target.style.backgroundColor) {
-          urlParameters.delete(e.target.id);
-          e.target.style.backgroundColor = UNSELECTED_COLOR;
-        } else {
+    table.addEventListener("click", function(e) {
+      // Only trigger click events in the table on table cells that have
+      // assigned id's.
+      if (e.target.tagName === "TD" && e.target.id !== "") {
+        if (urlParameters.get(e.target.id) === null) {
+          if (!e.target.id.includes("-")) {
+            // This is a book, to remove all the chapters from the URLs.
+            // Get a list first to avoid editing the list we are iterating over.
+            const keysToDelete = [];
+            urlParameters.forEach((val, key) => {
+              if (key.includes(e.target.id)) {
+                keysToDelete.push(key);
+              }
+            });
+            // Then delete those specific keys.
+            keysToDelete.forEach(key => {
+              urlParameters.delete(key);
+            });
+          }
+          // Add the cell to the URL parameters and set the selected color.
           urlParameters.append(e.target.id, "1");
           e.target.style.backgroundColor = SELECTED_COLOR;
+        } else {
+          // Remove the cell from the URL parameters and reset the colors.
+          urlParameters.delete(e.target.id);
+          e.target.style.backgroundColor = UNSELECTED_COLOR;
         }
+        // Remove the query parameters from the URL and add the new ones.
         let urlStr = window.location.toString();
         if (urlStr.includes("?")) {
           urlStr = urlStr.slice(0, urlStr.indexOf("?"));
