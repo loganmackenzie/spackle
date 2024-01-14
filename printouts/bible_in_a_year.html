@@ -134,7 +134,7 @@ function addBook(body, book, chapters) {
   let row = body.insertRow(-1);
   // Insert the book name cell, rowSpan, and set the color.
   let bookCell = row.insertCell(0);
-  bookCell.id = book.replaceAll(" ", "_");
+  bookCell.id = Object.keys(BOOK_CHAPTERS).indexOf(book.replaceAll(" ", "_"));
   bookCell.rowSpan = Math.ceil(chapters / CHAPTERS_PER_ROW);
   let bookText = document.createTextNode(book);
   bookCell.appendChild(bookText);
@@ -211,7 +211,7 @@ function bookClicked(book) {
     // remove all chapters from the URL.
     book.style.backgroundColor = HIGHLIGHTED_COLOR;
     highlightBookChapters(book.id, HIGHLIGHTED_COLOR);
-    urlParameters.append(book.id, "1");
+    urlParameters.append(book.id, "");
     removeChaptersUrlParameters(book.id);
   }
 }
@@ -236,12 +236,12 @@ function chapterClicked(chapter) {
     // Chapter unselected --> selected. Highlight the chapter.
     // Highlight the chapter and add it to the URL parameters.
     chapter.style.backgroundColor = HIGHLIGHTED_COLOR;
-    urlParameters.append(chapter.id, "1");
+    urlParameters.append(chapter.id, "");
     if (allChaptersHighlighted(book.id)) {
       // If all the chapters are highlighted, hightlight the chapter,
       // Add it to the URL parameters, and remove the chapters from the URL.
       book.style.backgroundColor = HIGHLIGHTED_COLOR;
-      urlParameters.append(book.id, "1");
+      urlParameters.append(book.id, "");
       removeChaptersUrlParameters(book.id);
     } else {
       // Nothing to do
@@ -250,20 +250,20 @@ function chapterClicked(chapter) {
 }
 
 function highlightBookChapters(book_id, color) {
-  Array.from(Array(BOOK_CHAPTERS[book_id])).forEach((_, i) => {
+  Array.from(Array(Object.values(BOOK_CHAPTERS)[book_id])).forEach((_, i) => {
     document.getElementById(`${book_id}-${i + 1}`).style.backgroundColor = color;
   });
 }
 
 function allChaptersHighlighted(book_id) {
-  return Array.from(Array(BOOK_CHAPTERS[book_id])).every((_, i) => {
+  return Array.from(Array(Object.values(BOOK_CHAPTERS)[book_id])).every((_, i) => {
     return document.getElementById(`${book_id}-${i + 1}`).style.backgroundColor;
   });
 }
 
 function removeChaptersUrlParameters(book_id) {
   // Delete all the chapters (whether present or not) from the URL parameters.
-  Array.from(Array(BOOK_CHAPTERS[book_id])).forEach((_, i) => {
+  Array.from(Array(Object.values(BOOK_CHAPTERS)[book_id])).forEach((_, i) => {
     urlParameters.delete(`${book_id}-${i + 1}`);
   });
 }
@@ -272,10 +272,10 @@ function addChaptersUrlParameters(book_id, except_chapter) {
   // Remove the book from the URL parameters and add all the chapters back,
   // except the specified chapter.
   urlParameters.delete(book_id);
-  Array.from(Array(BOOK_CHAPTERS[book_id])).forEach((_, i) => {
+  Array.from(Array(Object.values(BOOK_CHAPTERS)[book_id])).forEach((_, i) => {
     let chapter_id = `${book_id}-${i + 1}`;
     if (chapter_id !== except_chapter) {
-      urlParameters.append(chapter_id, "1");
+      urlParameters.append(chapter_id, "");
     }
   });
 }
