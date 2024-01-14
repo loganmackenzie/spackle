@@ -37,7 +37,7 @@
 <script>
 const CHAPTERS_PER_ROW = 24;
 const UNSELECTED_COLOR = "";
-const SELECTED_COLOR = "#77FF00";
+const DEFAULT_SELECTED_COLOR = "#77FF00";
 
 const BIBLE = {
   "Old Testament": [
@@ -114,6 +114,17 @@ const BIBLE = {
 const BOOK_CHAPTERS = Object.fromEntries(Object.values(BIBLE).flat(1).map(book => [book["book"].replaceAll(" ", "_"), book["chapters"]]))
 
 const urlParameters = new URLSearchParams(window.location.search);
+
+function getColor() {
+  const opt = new Option().style;
+  opt.color = urlParameters.get("color");
+  if (opt.color !== '') {
+    return opt.color;
+  }
+  return DEFAULT_SELECTED_COLOR;
+}
+
+const HIGHLIGHTED_COLOR = getColor();
 
 function addBook(body, book, chapters) {
   // Insert a new row into the table
@@ -195,8 +206,8 @@ function bookClicked(book) {
   } else {
     // Book unslected --> selected. Highlight all chapters. Add book to URL, but
     // remove all chapters from the URL.
-    book.style.backgroundColor = SELECTED_COLOR;
-    highlightBookChapters(book.id, SELECTED_COLOR);
+    book.style.backgroundColor = HIGHLIGHTED_COLOR;
+    highlightBookChapters(book.id, HIGHLIGHTED_COLOR);
     urlParameters.append(book.id, "1");
     removeChaptersUrlParameters(book.id);
   }
@@ -221,12 +232,12 @@ function chapterClicked(chapter) {
   } else {
     // Chapter unselected --> selected. Highlight the chapter.
     // Highlight the chapter and add it to the URL parameters.
-    chapter.style.backgroundColor = SELECTED_COLOR;
+    chapter.style.backgroundColor = HIGHLIGHTED_COLOR;
     urlParameters.append(chapter.id, "1");
     if (allChaptersHighlighted(book.id)) {
       // If all the chapters are highlighted, hightlight the chapter,
       // Add it to the URL parameters, and remove the chapters from the URL.
-      book.style.backgroundColor = SELECTED_COLOR;
+      book.style.backgroundColor = HIGHLIGHTED_COLOR;
       urlParameters.append(book.id, "1");
       removeChaptersUrlParameters(book.id);
     } else {
@@ -269,7 +280,10 @@ function addChaptersUrlParameters(book_id, except_chapter) {
 function highlightFromUrlParameters() {
   // Highlight all the chapters and books specified in the URL parameters.
   urlParameters.forEach((_, id) => {
-    document.getElementById(id).style.backgroundColor = SELECTED_COLOR;
+    var cell = document.getElementById(id);
+    if (cell != null) {
+      cell.style.backgroundColor = HIGHLIGHTED_COLOR;
+    }
   });
 }
 
