@@ -283,6 +283,9 @@ function highlightFromUrlParameters() {
     var cell = document.getElementById(id);
     if (cell != null) {
       cell.style.backgroundColor = HIGHLIGHTED_COLOR;
+      if (!id.includes("-")) {
+        highlightBookChapters(id, HIGHLIGHTED_COLOR);
+      }
     }
   });
 }
