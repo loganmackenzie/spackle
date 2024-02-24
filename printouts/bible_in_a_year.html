@@ -2,18 +2,9 @@
 <head>
   <style>
     table {
-      border: 1px solid black;
-      border-collapse: collapse;
       width: 100%;
     }
-    th, tr, td {
-      border: 1px solid black;
-      border-collapse: collapse;
-      margin: 0px;
-      text-align: center;
-      font: 12pt "Helvetica";
-    }
-    h1, h2 {
+    h1, h2, h3, h4 {
       margin: 0px;
       text-align: center;
     }
@@ -27,6 +18,13 @@
         size: letter portrait;
       }
     }
+    .bordered-table {
+      border: 1px solid black;
+      border-collapse: collapse;
+      margin: 0px;
+      text-align: center;
+      font: 12pt "Helvetica";
+    }
     .chapter_column {
       table-layout: fixed;
       width: 3.75%;
@@ -35,7 +33,20 @@
 </head>
 <body>
   <div id="content">
-    <h1>Bible Reading Checklist</h1>
+    <table>
+      <thead>
+        <tr>
+          <th width="25%"></th>
+          <th width="50%">
+            <h1>Bible Reading Checklist</h1>
+          </th>
+          <th width="25%" text-align="right">
+            <h4 id="read-count"></h4>
+            <h4 id="read-percent"></h4>
+          </th>
+        <tr>
+      </thead>
+    </table>
   <div>
 <script>
 const CHAPTERS_PER_ROW = 24;
@@ -115,6 +126,7 @@ const BIBLE = {
   ]
 };
 const BOOK_CHAPTERS = Object.fromEntries(Object.values(BIBLE).flat(1).map(book => [book["book"].replaceAll(" ", "_"), book["chapters"]]))
+const TOTAL_CHAPTERS = Object.values(BOOK_CHAPTERS).reduce((acc, val) => (acc + val), 0);
 
 const urlParameters = new URLSearchParams(window.location.search);
 
@@ -132,8 +144,10 @@ const HIGHLIGHTED_COLOR = getColor();
 function addBook(body, book, chapters) {
   // Insert a new row into the table
   let row = body.insertRow(-1);
+  row.classList.add("bordered-table");
   // Insert the book name cell, rowSpan, and set the color.
   let bookCell = row.insertCell(0);
+  bookCell.classList.add("bordered-table");
   bookCell.id = Object.keys(BOOK_CHAPTERS).indexOf(book.replaceAll(" ", "_"));
   bookCell.rowSpan = Math.ceil(chapters / CHAPTERS_PER_ROW);
   let bookText = document.createTextNode(book);
@@ -143,7 +157,7 @@ function addBook(body, book, chapters) {
     // Insert a cell for the chapter and set the color.
     let cell = row.insertCell(-1);
     cell.id = `${bookCell.id}-${i + 1}`;
-    cell.classList.add("chapter_column");
+    cell.classList.add("bordered-table", "chapter_column");
     let text = document.createTextNode(`${i + 1}`);
     cell.appendChild(text);
     // Wrap the chapters around into the next row if needed.
@@ -164,6 +178,11 @@ function populateTables() {
     th.colSpan = CHAPTERS_PER_ROW + 1;
     const header = document.createElement("h2");
     const title = document.createTextNode(testament[0]);
+    // Add table styling
+    table.classList.add("bordered-table");
+    head.classList.add("bordered-table");
+    th.classList.add("bordered-table");
+    // Add children to DOM
     header.appendChild(title);
     th.appendChild(header);
     head.appendChild(th);
@@ -214,6 +233,7 @@ function bookClicked(book) {
     urlParameters.append(book.id, "");
     removeChaptersUrlParameters(book.id);
   }
+  computePercentageComplete();
 }
 
 function chapterClicked(chapter) {
@@ -247,6 +267,7 @@ function chapterClicked(chapter) {
       // Nothing to do
     }
   }
+  computePercentageComplete();
 }
 
 function highlightBookChapters(book_id, color) {
@@ -293,8 +314,23 @@ function highlightFromUrlParameters() {
   });
 }
 
+function computePercentageComplete() {
+  let count = 0;
+  urlParameters.forEach((_, id) => {
+    if (id.includes("-")) {
+      count++;  // Just a single chapter
+    } else {
+      count += Object.values(BOOK_CHAPTERS)[id];  // Add the entire book
+    }
+  });
+  let percentage = (count / TOTAL_CHAPTERS * 100).toFixed(1);
+  document.getElementById("read-count").innerHTML = `${count} / ${TOTAL_CHAPTERS}`;
+  document.getElementById("read-percent").innerHTML = `${percentage}%`;
+}
+
 populateTables();
 highlightFromUrlParameters();
+computePercentageComplete();
 </script>
 </body>
 </html>
